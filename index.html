@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard quản trị mạng lưới – TT Phú Thọ</title>
+<style>
+:root{--bg:#f5f7fb;--cd:#fff;--tx:#1b2430;--mu:#6b7686;--bd:#e1e6ee;--pri:#1f3864;--ac:#2e75d6;--ac2:#f0a030;--g:#2e9d5b;--y:#e0a21a;--r:#d64545;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151c;--cd:#182029;--tx:#e8edf3;--mu:#93a0b2;--bd:#273241;--pri:#8fb4ff;--ac:#5b9bf0}}
+:root[data-theme="dark"]{--bg:#10151c;--cd:#182029;--tx:#e8edf3;--mu:#93a0b2;--bd:#273241;--pri:#8fb4ff;--ac:#5b9bf0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Arial,Helvetica,sans-serif}
+.w{max-width:1100px;margin:0 auto;padding:14px}
+h1{font-size:18px;margin:0 0 2px;color:var(--pri)}.sub{color:var(--mu);font-size:12px;margin-bottom:10px}
+.f{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+select,.b{background:var(--cd);color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font:inherit;cursor:pointer}
+.b.on{background:var(--pri);color:var(--bg);border-color:var(--pri)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--bd);margin:10px 0 12px;overflow-x:auto}
+.tabs .b{border:0;border-radius:6px 6px 0 0;white-space:nowrap}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.k{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:10px;position:relative}
+.k span{font-size:11px;color:var(--mu)}.k b{display:block;font-size:22px;margin:2px 0}.k small{font-size:11px;color:var(--mu)}
+.k i{position:absolute;right:10px;top:10px;width:10px;height:10px;border-radius:50%}
+.s-g{background:var(--g)}.s-y{background:var(--y)}.s-r{background:var(--r)}
+.row{display:grid;grid-template-columns:2fr 1fr;gap:10px}@media(max-width:760px){.row{grid-template-columns:1fr}}
+.c{background:var(--cd);border:1px solid var(--bd);border-radius:8px;padding:10px;margin-bottom:10px;overflow-x:auto}
+.c h3{font-size:13px;margin:0 0 6px;color:var(--pri)}svg{width:100%;height:auto;display:block}svg text{fill:var(--tx);font-size:10px}
+table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+.lg{font-size:11px;color:var(--mu);margin-top:4px}.lg u{display:inline-block;width:10px;height:10px;margin:0 3px 0 8px;text-decoration:none}
+.bd{padding:1px 7px;border-radius:9px;font-size:11px;color:#fff}
+</style></head><body><div class="w">
+<h1>Cập nhật doanh thu PPBL – TT Phú Thọ</h1>
+<div class="sub">Số liệu cập nhật T1–T9/2026, đơn vị triệu đồng. KPI tháng = KPI năm × tỷ trọng tháng; mốc bình quân = KPI bán lẻ tháng ÷ 21.</div>
+<div class="f"><label>Tháng <select id="m"></select></label>
+<span id="ch"></span>
+<label>Nhóm <select id="g"><option value="all">Tất cả</option><option>A</option><option>B</option><option>C</option><option>D</option></select></label><label><input type="checkbox" id="vp"> Gồm VP BĐTT (tab Hiệu suất)</label></div>
+<div class="tabs" id="tb"></div><div id="v"></div></div>
+<script>
+// ==========================================
+// 1. DÁN LINK CSV CỦA SHEET "DuLieu" VÀO ĐÂY
+// ==========================================
+const SHEET_CSV_URL = "DÁN_LINK_CSV_CỦA_BẠN_VÀO_ĐÂY";
+
+let D={"u": ["Chí Hòa", "Tân Bình", "Bà Quẹo", "Bàu Cát", "Tân Sơn Nhất", "Tham Lương", "Trường Chinh", "Bảy Hiền", "Phú Thọ", "Ngô Quyền", "VP BĐTT Phú Thọ", "Hoà Hưng", "3 tháng 2", "Sư Vạn Hạnh", "Quận 10", "Bà Hạt", "Tân Phú", "Tây Thạnh", "Gò Dầu", "Luỹ Bán Bích", "Phú Thọ Hòa"], "r": [[12, 11, 8, 21, 12, 11, 9, 21, 24], [19, 24, 20, 26, 23, 20, 19, 23, 44], [0, 7, 7, 5, 3, 6, 8, 10, 7], [10, 2, 4, 19, 8, 12, 9, 18, 11], [2, 4, 4, 2, 3, 5, 6, 31, 45], [0, 0, 0, 0, 0, 0, 0, 0, 0], [6, 6, 5, 6, 4, 6, 5, 6, 9], [50, 3, 6, 13, 4, 12, 14, 30, 27], [21, 13, 4, 73, 606, 350, 56, 96, 271], [181, 5, 6, 9, 5, 8, 7, 34, 77], [7, 29, 3, 11, 215, 598, 598, 1466, 1643], [11, 45, 5, 10, 5, 8, 10, 6, 11], [0, 0, 0, 0, 0, 0, 0, 0, 0], [12, 19, 5, 9, 6, 9, 7, 7, 14], [539, 14, 1098, 56, 27, 15, 52, 100, 138], [153, 4, 4, 4, 4, 4, 4, 21, 33], [5, 0, 38, 30, 13, 7, 16, 24, 32], [33, 9, 14, 8, 9, 19, 18, 16, 17], [21, 10, 3, 7, 5, 12, 9, 10, 18], [3, 1, 3, 11, 9, 5, 6, 7, 9], [8, 4, 5, 18, 17, 15, 18, 16, 17]], "b": [[0, 0, 594, 0, 0, 0, 0, 0, 0], [0, 0, 1069, 0, 0, 0, 0, 0, 0], [0, 0, 594, 0, 0, 0, 0, 0, 0], [0, 0, 475, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 475, 0, 0, 0, 0, 0, 0], [0, 0, 594, 0, 12, 0, 0, 0, 0], [0, 0, 1029, 0, 0, 0, 0, 0, 0], [0, 0, 475, 0, 0, 0, 0, 0, 0], [3053, 4084, 4008, 2026, 14581, 18691, 9223, 10039, 12531], [0, 0, 487, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 365, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 467, 0, 0, 0, 0, 0, 0], [0, 0, 1206, 0, 0, 0, 0, 0, 0], [0, 0, 594, 0, 0, 0, 0, 0, 0], [0, 0, 475, 0, 0, 0, 0, 0, 0], [0, 0, 475, 5, 0, 0, 0, 0, 0], [0, 0, 594, 0, 0, 0, 0, 0, 0]]};
+
+const W=[.08,.05,.07,.08,.08,.09,.08,.08,.09,.07,.08,.15],PT=47300,PR=6700,PB=40600;
+let N=21,VP=-1;
+const S={m:9,ch:'all',g:'all',t:0,vp:false};
+
+function updateDerivedVars() {
+    N = D.u.length;
+    VP = D.u.findIndex(name => name && name.toLowerCase().includes('vp bđtt'));
+    if (VP === -1) VP = D.u.indexOf('VP BĐTT Phú Thọ');
+}
+
+const AM=[1,2,3,4,5,6,7,8,9],val=(i,m,c)=>m==0?AM.reduce((a,j)=>a+val(i,j,c),0):c=='r'?(D.r[i][m-1]||0):c=='b'?(D.b[i][m-1]||0):(D.r[i][m-1]||0)+(D.b[i][m-1]||0);
+const kp=(m,c)=>m==0?AM.reduce((a,j)=>a+kp(j,c),0):(c=='r'?PR:c=='b'?PB:PT)*W[m-1];
+const sum=(m,c,f)=>D.u.reduce((a,_,i)=>a+(f&&!f(i)?0:val(i,m,c)),0);
+const nv=i=>i!=VP,f0=x=>Math.round(x).toLocaleString('vi-VN'),pc=x=>Math.round(x*100)+'%';
+const st=(v,g,y)=>v>=g?'g':v>=y?'y':'r';
+const mo=(m,c='r')=>kp(m,c)/Math.max(1, N-1);
+const CN={all:'Tất cả',r:'Bán lẻ',b:'B2B'};
+const grp=(i,m,c='r')=>{const v=val(i,m,c),t=mo(m,c),lo=c=='r'?10*(m||9):.35*t;return v>=t?'A':v>=.75*t?'B':v>=lo?'C':'D'};
+const GC={A:'#2e9d5b',B:'#2e75d6',C:'#e0a21a',D:'#d64545'};
+const card=(l,v,s,c)=>`<div class="k"><span>${l}</span><i class="s-${c}"></i><b>${v}</b><small>${s}</small></div>`;
+
+function t0(){const m=S.m,me=m||9,TL=m?'T'+m:'Lũy kế T1–T9',c=S.ch,a=sum(m,c),k=kp(m,c);
+let ytd=0;for(let j=1;j<=me;j++)ytd+=sum(j,c);const ka=c=='r'?PR:c=='b'?PB:PT;
+const bl=sum(m,'r',nv),bk=kp(m,'r'),ok=D.u.filter((_,i)=>val(i,m,'r')>=mo(m)).length;
+const vp=sum(m,'all',i=>i==VP)/sum(m,'all'),b2=D.u.filter((_,i)=>val(i,m,'b')>0).length;
+const lo=D.u.filter((_,i)=>nv(i)&&val(i,m,'r')<10*(m||9)).length,pv=m>1?sum(m-1,'r',nv):0;
+const wk=m==9?'69%':'—';
+let h='<div class="g">'+card('Doanh thu '+(m?'tháng':'lũy kế'),f0(a),'% KPI '+(m?'tháng':'lũy kế')+': '+pc(a/k),st(a/k,1,.8))+
+card('% KPI năm lũy kế',pc(ytd/ka),'Lũy kế '+f0(ytd)+' / '+f0(ka),st(ytd/ka,me/12,me/12-.1))+
+card('Bán lẻ ngoài VP',f0(bl),'% KPI bán lẻ: '+pc(bl/bk),st(bl/bk,1,.8))+
+card('Bưu cục đạt mốc',ok+'/'+(N-1),'Mốc '+mo(m).toFixed(1)+' triệu/đơn vị',st(ok/(N-1),.6,.4))+
+card('Tỷ trọng VP',pc(vp),'Chuẩn đề xuất ≤ 75%',vp<=.75?'g':vp<=.9?'y':'r')+
+card('Bưu cục có B2B',b2+'/'+(N-1),'Chuẩn đề xuất ≥ 8',st(b2,8,4))+
+card('Dưới 10 triệu bán lẻ',lo,'Bưu cục (không gồm VP)',lo==0?'g':lo<=3?'y':'r')+
+card('Tuần 4 / tháng',wk,'Chuẩn đề xuất ≤ 45% (có từ T9)',m==9?'r':'y')+
+card('Tăng trưởng bán lẻ ngoài VP',m>1?(bl/pv>=1?'+':'')+pc(bl/pv-1):'—','So với tháng trước',m>1?(bl>=pv?'g':'r'):'y')+'</div>';
+const T=[],P=[];let mx=0,pm=0;for(let j=1;j<=9;j++){const r=c=='b'?0:sum(j,'r'),b=c=='r'?0:sum(j,'b');T.push([r,b]);mx=Math.max(mx,r+b);const p=sum(j,c)/kp(j,c);P.push(p);pm=Math.max(pm,p)}
+let s='<svg viewBox="0 0 560 230">',x0=36,bw=36,gp=(520-9*bw)/8,H=170;
+T.forEach((t,j)=>{const x=x0+j*(bw+gp),h1=t[0]/mx*H,h2=t[1]/mx*H,on=(!m||j+1==m)?1:.55;
+s+=`<rect x="${x}" y="${200-h2-h1}" width="${bw}" height="${h2}" fill="var(--ac)" opacity="${on}"/><rect x="${x}" y="${200-h1}" width="${bw}" height="${h1}" fill="var(--ac2)" opacity="${on}"/><text x="${x+bw/2}" y="215" text-anchor="middle">T${j+1}</text>`});
+s+='<polyline fill="none" stroke="var(--r)" stroke-width="2" points="'+P.map((p,j)=>(x0+j*(bw+gp)+bw/2)+','+(200-p/pm*H)).join(' ')+'"/>';
+P.forEach((p,j)=>s+=`<text x="${x0+j*(bw+gp)+bw/2}" y="${192-p/pm*H}" text-anchor="middle" fill="var(--r)" style="fill:var(--r)">${pc(p)}</text>`);
+s+='</svg><div class="lg"><u style="background:var(--ac2)"></u>Bán lẻ<u style="background:var(--ac)"></u>B2B<u style="background:var(--r)"></u>% KPI tháng</div>';
+h+='<div class="row"><div class="c"><h3>Doanh thu theo tháng và % KPI (cột chồng + đường)</h3>'+s+'</div>';
+const va=sum(m,c,i=>i==VP),vb=sum(m,c,nv),tt=va+vb||1,C=377;
+h+=`<div class="c"><h3>Cơ cấu VP so với ngoài VP (${TL})</h3><svg viewBox="0 0 200 170"><circle cx="100" cy="85" r="60" fill="none" stroke="var(--ac2)" stroke-width="26"/><circle cx="100" cy="85" r="60" fill="none" stroke="var(--pri)" stroke-width="26" stroke-dasharray="${C*va/tt} ${C}" transform="rotate(-90 100 85)"/><text x="100" y="90" text-anchor="middle" style="font-size:16px;font-weight:bold">${pc(va/tt)}</text></svg><div class="lg"><u style="background:var(--pri)"></u>VP BĐTT ${f0(va)}<u style="background:var(--ac2)"></u>${N-1} bưu cục ${f0(vb)}</div></div></div>`;
+const CA=[],CK=[];let ca=0,ck=0;for(let j=1;j<=9;j++){ca+=sum(j,c);ck+=kp(j,c);CA.push(ca);CK.push(ck)}
+const ym=Math.max(ca,ck,ka),X2=j=>56+j*56,Y2=v=>190-v/ym*165;
+let q='<svg viewBox="0 0 560 230">';
+[0,.25,.5,.75,1].forEach(g=>q+=`<line x1="52" x2="540" y1="${Y2(ym*g)}" y2="${Y2(ym*g)}" stroke="var(--bd)"/><text x="48" y="${Y2(ym*g)+3}" text-anchor="end">${f0(ym*g)}</text>`);
+q+=`<line x1="52" x2="540" y1="${Y2(ka)}" y2="${Y2(ka)}" stroke="var(--y)" stroke-dasharray="2 3" stroke-width="2"/><text x="540" y="${Y2(ka)-4}" text-anchor="end" style="fill:var(--y)">KPI năm ${f0(ka)}</text>`;
+q+=`<polygon fill="var(--ac)" opacity=".12" points="${X2(0)},190 ${CA.map((v,j)=>X2(j)+','+Y2(v)).join(' ')} ${X2(8)},190"/><polyline fill="none" stroke="var(--r)" stroke-dasharray="5 4" stroke-width="2" points="${CK.map((v,j)=>X2(j)+','+Y2(v)).join(' ')}"/><polyline fill="none" stroke="var(--ac)" stroke-width="2.5" points="${CA.map((v,j)=>X2(j)+','+Y2(v)).join(' ')}"/>`;
+CA.forEach((v,j)=>q+=`<circle cx="${X2(j)}" cy="${Y2(v)}" r="${j+1==me?5:3}" fill="var(--ac)"/><text x="${X2(j)}" y="${Y2(v)-8}" text-anchor="middle">${f0(v)}</text><text x="${X2(j)}" y="212" text-anchor="middle">T${j+1}</text>`);
+h+=`<div class="c"><h3>Thực hiện lũy kế T1–T9 so với KPI (${CN[c]})</h3>${q}</svg><div class="lg"><u style="background:var(--ac)"></u>Lũy kế thực hiện<u style="background:var(--r)"></u>KPI lũy kế theo kế hoạch<u style="background:var(--y)"></u>KPI năm. Đến T${me}: ${f0(CA[me-1])} = ${pc(CA[me-1]/ka)} KPI năm và ${pc(CA[me-1]/CK[me-1])} KPI lũy kế kế hoạch.</div></div>`;
+return h}
+
+function t1(){const m=S.m,TL=m?'T'+m:'Lũy kế',c=S.ch,t=mo(m,c),vv=i=>val(i,m,c);
+const ids=D.u.map((_,i)=>i).filter(i=>(S.vp||nv(i))&&(S.g=='all'||(nv(i)&&grp(i,m,c)==S.g)));
+const rows=ids.slice().sort((a,b)=>vv(b)-vv(a)),gc=i=>nv(i)?GC[grp(i,m,c)]:'#7a869a';
+const mx=Math.max(t*1.3,...rows.map(vv),1),H=rows.length*20+24;
+let s=`<svg viewBox="0 0 560 ${H}">`;rows.forEach((i,j)=>{const v=vv(i),y=8+j*20;
+s+=`<text x="100" y="${y+11}" text-anchor="end">${D.u[i]}</text><rect x="106" y="${y}" width="${Math.max(1,v/mx*380)}" height="14" fill="${gc(i)}" rx="2"/><text x="${112+v/mx*380}" y="${y+11}">${f0(v)}</text>`});
+const lx=106+t/mx*380;s+=`<line x1="${lx}" x2="${lx}" y1="0" y2="${H-14}" stroke="var(--r)" stroke-dasharray="4 3"/><text x="${lx}" y="${H-3}" text-anchor="middle" style="fill:var(--r)">Mốc ${t.toFixed(1)}</text></svg>`;
+let h=`<div class="c"><h3>Xếp hạng bưu cục theo ${CN[c]} ${TL} (${S.vp?'gồm':'không gồm'} VP)</h3>`+s+'<div class="lg">'+['A','B','C','D'].map(k=>`<u style="background:${GC[k]}"></u>Nhóm ${k}`).join('')+(S.vp?'<u style="background:#7a869a"></u>VP BĐTT':'')+`. Mốc = KPI ${CN[c]} tháng ÷ ${N-1} đơn vị; A ≥ mốc, B ≥ 75%, C ≥ ${c=='r'?'10 triệu':'35% mốc'}, D thấp hơn.</div></div>`;
+h+=`<div class="c"><h3>Heatmap ${CN[c]}: bưu cục × tháng (triệu)</h3><table><tr><th>Bưu cục</th>`+[1,2,3,4,5,6,7,8,9].map(j=>`<th${j==m?' style="color:var(--r)"':''}>T${j}</th>`).join('')+`<th${m==0?' style="color:var(--r)"':''}>Lũy kế</th><th>Nhóm</th></tr>`;
+ids.forEach(i=>{h+=`<tr><td>${D.u[i]}</td>`+[1,2,3,4,5,6,7,8,9].map(j=>{const v=val(i,j,c);return `<td style="background:rgba(46,117,214,${Math.min(.85,v/(mo(j,c)*2))})">${f0(v)}</td>`}).join('')+`<td style="background:rgba(46,117,214,${Math.min(.85,val(i,0,c)/(mo(0,c)*2))})">${f0(val(i,0,c))}</td><td>${nv(i)?grp(i,m,c):'VP'}</td></tr>`});
+return h+'</table></div>'}
+
+function t2(){const A=[38,1161,4700,14978],k=kp(9,'all'),M=[.2,.45,.7,1].map(x=>x*k),mx=15500,X=i=>50+i*120,Y=v=>190-v/mx*170;
+let s='<svg viewBox="0 0 560 220">';[0,1,2,3,4].forEach(i=>s+=`<text x="${X(i)}" y="208" text-anchor="middle">${i?'Tuần '+i:'Đầu tháng'}</text>`);
+s+=`<polyline fill="none" stroke="var(--ac)" stroke-width="2.5" points="${[0,...A].map((v,i)=>X(i)+','+Y(v)).join(' ')}"/><polyline fill="none" stroke="var(--r)" stroke-dasharray="5 4" stroke-width="2" points="${[0,...M].map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
+A.forEach((v,i)=>s+=`<text x="${X(i+1)}" y="${Y(v)-6}" text-anchor="middle">${f0(v)}</text>`);
+s+='</svg><div class="lg"><u style="background:var(--ac)"></u>Lũy kế thực hiện T9<u style="background:var(--r)"></u>Mốc 20/45/70/100% KPI tháng ('+f0(k)+'). Cuối tuần 2 mới đạt 27% KPI tháng (mốc 45%), nhưng tuần 4 chiếm 69% doanh thu.</div>';
+const I=[['Giao KPI nội bộ theo bưu cục','Đầu T10'],['Quản trị theo 4 nhóm A–D','T10–T12'],['Nhịp điều hành tuần','Từ T10'],['Nhân rộng thực hành tốt','T11'],['Phục hồi nhóm D, xác minh 2 đơn vị bằng 0','T10–T11'],['Mở rộng B2B ngoài VP','T10–T11'],['Chuẩn bị mùa vụ T12','Cuối T11'],['Chuẩn hoá dữ liệu và dashboard','15/10']];
+return '<div class="c"><h3>Nhịp tuần T9: lũy kế so với mốc</h3>'+s+'</div><div class="c"><h3>Theo dõi 8 tiến độ (minh hoạ)</h3><table><tr><th>#</th><th>Công việc</th><th>Hạn</th><th>Trạng thái</th></tr>'+I.map((r,i)=>`<tr><td>${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td><span class="bd s-${i==7?'y':'r'}">${i==7?'Đang dựng':'Chưa bắt đầu'}</span></td></tr>`).join('')+'</table></div>'}
+
+function R(){
+    document.getElementById('v').innerHTML=[t0,t1,t2][S.t]();
+    document.getElementById('tb').innerHTML=['Tổng quan','Hiệu suất bưu cục',' Theo tuần & công việc'].map((n,i)=>`<button class="b${i==S.t?' on':''}" onclick="S.t=${i};R()">${n}</button>`).join('');
+    document.getElementById('ch').innerHTML=[['all','Tất cả'],['r','Bán lẻ'],['b','B2B']].map(a=>`<button class="b${S.ch==a[0]?' on':''}" onclick="S.ch='${a[0]}';R()">${a[1]}</button>`).join(' ');
+}
+
+// Hàm tải dữ liệu từ Sheet DuLieu
+async function loadGoogleSheetData() {
+    if (!SHEET_CSV_URL.startsWith("http")) {
+        console.warn("Chưa cấu hình Google Sheet URL, sử dụng dữ liệu mẫu.");
+        updateDerivedVars();
+        return R();
+    }
+
+    try {
+        const res = await fetch(SHEET_CSV_URL);
+        const text = await res.text();
+        
+        // Parse CSV (Hỗ trợ ngoặc kép và dấu phẩy an toàn)
+        const rows = [];
+        let row = [], inQuotes = false, val = "";
+        for (let i = 0; i < text.length; i++) {
+            const c = text[i];
+            if (c === '"') inQuotes = !inQuotes;
+            else if (c === ',' && !inQuotes) { row.push(val.trim()); val = ""; }
+            else if (c === '\n' && !inQuotes) { 
+                row.push(val.trim()); 
+                if(row.join('') !== '') rows.push(row); 
+                row = []; val = ""; 
+            }
+            else if (c !== '\r') val += c;
+        }
+        if (val) row.push(val.trim());
+        if (row.length > 0 && row.join('') !== '') rows.push(row);
+
+        const bdxList = [];
+        const rMap = {}, bMap = {};
+
+        // Bỏ qua dòng 1 (tiêu đề), đọc từ dòng 2
+        for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i];
+            if (cols.length < 4 || !cols[0]) continue;
+            
+            const bdx = cols[0];
+            const thangStr = cols[1];
+            
+            // Tìm số tháng từ chữ (VD: "Tháng 1" -> 1)
+            const thangMatch = thangStr.match(/\d+/);
+            if (!thangMatch) continue;
+            const thang = parseInt(thangMatch[0]);
+
+            // Làm sạch số tiền Bán lẻ & B2B
+            const banleStr = cols[2].replace(/,/g, '.'); 
+            const b2bStr = cols[3].replace(/,/g, '.');
+            const banle = parseFloat(banleStr.replace(/[^\d.-]/g, '')) || 0;
+            const b2b = parseFloat(b2bStr.replace(/[^\d.-]/g, '')) || 0;
+
+            if (!bdxList.includes(bdx)) {
+                bdxList.push(bdx);
+                rMap[bdx] = Array(9).fill(0);
+                bMap[bdx] = Array(9).fill(0);
+            }
+
+            if (thang >= 1 && thang <= 9) {
+                rMap[bdx][thang - 1] = banle;
+                bMap[bdx][thang - 1] = b2b;
+            }
+        }
+
+        // Thay thế toàn bộ mảng dữ liệu D nếu đọc thành công
+        if (bdxList.length > 0) {
+            D.u = bdxList;
+            D.r = bdxList.map(b => rMap[b]);
+            D.b = bdxList.map(b => bMap[b]);
+            updateDerivedVars();
+        }
+    } catch (error) {
+        console.error("Lỗi khi tải dữ liệu từ Google Sheet:", error);
+    }
+    
+    R();
+}
+
+const sm=document.getElementById('m');
+for(let j=1;j<=9;j++) sm.add(new Option('T'+j,j,0,j==9));
+sm.add(new Option('Lũy kế T1–T9',0));
+sm.onchange=e=>{S.m=+e.target.value;R()};
+document.getElementById('g').onchange=e=>{S.g=e.target.value;R()};
+document.getElementById('vp').onchange=e=>{S.vp=e.target.checked;R()};
+
+// Khởi chạy
+loadGoogleSheetData();
+</script></body></html>
